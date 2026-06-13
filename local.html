@@ -1,0 +1,1079 @@
+////Local 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Songo — Jeu de Semailles</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Outfit:wght@300;400;600;800&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg-dark: #0a0807;
+  --board-bg: linear-gradient(135deg, #2c160e 0%, #1c0d08 50%, #110704 100%);
+  --gold: #d4af37;
+  --gold-glow: rgba(212, 175, 55, 0.4);
+  --emerald: #10b981;
+  --emerald-glow: rgba(16, 185, 129, 0.3);
+  --sapphire: #3b82f6;
+  --sapphire-glow: rgba(59, 130, 246, 0.3);
+  --text-white: #f5efe6;
+  --text-gold: #f3e5c8;
+  --text-muted: #a08c84;
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 8px;
+  --shadow-deep: 0 20px 45px rgba(0,0,0,0.85), inset 0 2px 4px rgba(255,255,255,0.05);
+  --shadow-inset: inset 0 8px 16px rgba(0,0,0,0.9), inset 0 -2px 4px rgba(255,255,255,0.05);
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-dark);
+  background-image: radial-gradient(circle at center, rgba(212, 175, 55, 0.04) 0%, transparent 80%),
+                    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M0 0h30v30H0zm30 30h30v30H30z' fill='%2319110d' fill-opacity='.25'/%3E%3Cpath d='M30 0h30v30H30zM0 30h30v30H0z' fill='%23221712' fill-opacity='.18'/%3E%3Cpath d='M15 0L30 15L15 30L0 15zM45 30L60 45L45 60L30 45z' fill='%23d4af37' fill-opacity='.025'/%3E%3C/svg%3E");
+  color: var(--text-white);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  overflow-x: hidden;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.header h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 2.6rem;
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 0.15em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 15px var(--gold-glow);
+  margin-bottom: 4px;
+}
+.header p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Board */
+.board {
+  background: var(--board-bg);
+  border: 5px double var(--gold);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-deep);
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 540px;
+  position: relative;
+  margin-bottom: 16px;
+}
+.board::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: 8px; right: 8px; bottom: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  border-radius: calc(var(--radius-lg) - 8px);
+  pointer-events: none;
+}
+.territory {
+  margin: 8px 0;
+  position: relative;
+}
+.territory-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.territory-label.north {
+  color: var(--emerald);
+  text-shadow: 0 0 8px var(--emerald-glow);
+}
+.territory-label.south {
+  color: var(--sapphire);
+  text-shadow: 0 0 8px var(--sapphire-glow);
+}
+.holes {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.hole {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 15%, #0f0705 10%, #1f0f0a 60%, #301810 100%);
+  border: 3px solid #2d160f;
+  box-shadow: var(--shadow-inset);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hole:hover {
+  transform: scale(1.1);
+  border-color: var(--gold);
+  box-shadow: 0 0 15px rgba(212,175,55,0.3), var(--shadow-inset);
+}
+.hole.valid {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px var(--gold-glow), var(--shadow-inset);
+}
+.hole.valid:hover {
+  box-shadow: 0 0 20px rgba(212,175,55,0.6), var(--shadow-inset);
+}
+.hole.selected {
+  border-color: #ff9f43;
+  box-shadow: 0 0 15px rgba(255, 159, 67, 0.5), var(--shadow-inset);
+}
+.divider {
+  height: 6px;
+  background: linear-gradient(90deg, transparent, var(--gold-glow), transparent);
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+  margin: 12px 0;
+}
+
+/* Pebbles/Seeds styles */
+.seeds-container {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.seed-stone {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 40% 60% 50% 50% / 50% 40% 60% 50%;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.85), inset 1px 1px 1px rgba(255,255,255,0.25);
+  transition: all 0.25s ease;
+}
+.stone-type-0 {
+  background: radial-gradient(circle at 35% 35%, #7f8c8d 0%, #2c3e50 70%, #151e26 100%);
+}
+.stone-type-1 {
+  background: radial-gradient(circle at 35% 35%, #e67e22 0%, #d35400 75%, #6b2b00 100%);
+}
+.stone-type-2 {
+  background: radial-gradient(circle at 35% 35%, #f1c40f 0%, #9e5d00 70%, #3e2400 100%);
+}
+
+.seed-count-badge {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  background: rgba(18, 11, 8, 0.9);
+  border: 1px solid var(--gold);
+  color: var(--text-gold);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  z-index: 10;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+.hole:hover .seed-count-badge {
+  transform: scale(1.15);
+}
+
+/* Scores */
+.scores {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 540px;
+  margin: 8px 0 16px;
+  gap: 12px;
+}
+.score-card {
+  flex: 1;
+  background: rgba(22, 14, 11, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.score-card::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px dashed rgba(212, 175, 55, 0.05);
+  border-radius: calc(var(--radius-md) - 3px);
+}
+.score-card .name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+}
+.score-card .value {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-top: 4px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+.score-card.north .value { color: var(--emerald); }
+.score-card.south .value { color: var(--sapphire); }
+
+.score-card.north.active {
+  border-color: var(--emerald);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.18), 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.score-card.south.active {
+  border-color: var(--sapphire);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.18), 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.score-card.active .name {
+  color: var(--text-gold);
+}
+
+/* Status */
+.status {
+  width: 100%;
+  max-width: 540px;
+  text-align: center;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  background: rgba(22, 14, 11, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  font-size: 0.88rem;
+  color: var(--text-gold);
+  margin-bottom: 12px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.status.alert {
+  background: rgba(255, 77, 77, 0.12);
+  border-color: rgba(255, 77, 77, 0.35);
+  color: #ff9999;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 540px;
+  margin-top: 4px;
+}
+.btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-outline {
+  background: transparent;
+  color: var(--text-gold);
+  border: 1.5px solid var(--gold);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--gold);
+  color: #1a0c07;
+  box-shadow: 0 0 15px rgba(212,175,55,0.4);
+  transform: translateY(-2px);
+}
+.btn-outline:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-icon {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+}
+.btn-icon svg {
+  transition: transform 0.2s;
+}
+.btn-icon:hover svg {
+  transform: scale(1.1);
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Rules */
+.rules {
+  width: 100%;
+  max-width: 540px;
+  margin-top: 16px;
+  background: rgba(22, 14, 11, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+  padding: 24px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  transition: all 0.3s ease;
+}
+.rules h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 0.95rem;
+  margin: 14px 0 6px;
+  border-bottom: 1px solid rgba(212,175,55,0.12);
+  padding-bottom: 4px;
+}
+.rules h3:first-child {
+  margin-top: 0;
+}
+.rules ul {
+  margin-left: 20px;
+  margin-bottom: 6px;
+}
+.rules li {
+  margin-bottom: 2px;
+}
+
+/* Overlay Modal */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 3, 2, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.overlay-box {
+  background: linear-gradient(135deg, #25140e 0%, #160a06 100%);
+  border: 3px solid var(--gold);
+  border-radius: var(--radius-lg);
+  padding: 36px 28px;
+  text-align: center;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.9), 0 0 30px rgba(212,175,55,0.2);
+  max-width: 350px;
+  width: 90%;
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+}
+.overlay.show .overlay-box {
+  transform: translateY(0);
+}
+.overlay-box h2 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.8rem;
+  color: var(--gold);
+  margin-bottom: 10px;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+.overlay-box p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+.overlay-box .btn-primary {
+  background: var(--gold);
+  color: #1a0c07;
+  width: 100%;
+  font-weight: 700;
+}
+.overlay-box .btn-primary:hover {
+  box-shadow: 0 0 15px rgba(212,175,55,0.6);
+}
+
+/* Animations */
+@keyframes forbidden-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px) rotate(-1.5deg); }
+  75% { transform: translateX(4px) rotate(1.5deg); }
+}
+.hole.forbidden-anim {
+  animation: forbidden-shake 0.15s ease-in-out 3;
+  border-color: #ff4d4d !important;
+  box-shadow: 0 0 15px rgba(255, 77, 77, 0.6), var(--shadow-inset) !important;
+}
+
+@keyframes capture-burst {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.25); filter: brightness(1.8) drop-shadow(0 0 6px var(--gold)); }
+  100% { transform: scale(0); filter: brightness(1); opacity: 0; }
+}
+.hole.captured-flash .seed-stone {
+  animation: capture-burst 0.45s ease-out forwards;
+}
+
+@media(max-width:400px){
+  .hole{width:46px;height:46px}
+  .holes{gap:6px}
+  .seed-stone {width:8px;height:8px}
+  .seeds-container {width:24px;height:24px}
+  .board {padding: 24px 16px;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>SONGO</h1>
+  <p>Jeu traditionnel de semailles — Cameroun</p>
+</div>
+
+<div class="scores">
+  <div class="score-card north active" id="score-north">
+    <div class="name">Nord</div>
+    <div class="value" id="val-north">0</div>
+  </div>
+  <div class="score-card south" id="score-south">
+    <div class="name">Sud</div>
+    <div class="value" id="val-south">0</div>
+  </div>
+</div>
+
+<div class="status" id="status">Choisissez une case dans votre territoire</div>
+
+<div class="board">
+  <div class="territory">
+    <div class="territory-label north">Nord</div>
+    <div class="holes" id="holes-north"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="territory">
+    <div class="territory-label south">Sud</div>
+    <div class="holes" id="holes-south"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="btn btn-outline" onclick="resetGame()">Nouvelle partie</button>
+  <button class="btn btn-outline" onclick="toggleRules()">Règles</button>
+  <button class="btn btn-outline btn-icon" id="btn-sound" onclick="toggleSound()" title="Activer/Désactiver le son">
+    <svg id="sound-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+    </svg>
+  </button>
+</div>
+
+<div class="rules" id="rules" style="display:none">
+  <h3>Plateau</h3>
+  <p>14 cases en anneau, 5 graines chacune (70 total). NORD = cases 0-6, SUD = cases 7-13.</p>
+  <h3>Distribution</h3>
+  <p>Cliquez sur une case de votre territoire. Les graines se distribuent dans le sens horaire, une par une.</p>
+  <h3>Capture</h3>
+  <p>Si la dernière graine tombe dans une case adverse avec 2-4 graines, vous capturez. La prise à la chaîne continue dans les cases précédentes.</p>
+  <h3>Case 1</h3>
+  <p>Si le nombre total de graines distribuées est un multiple de 14 et tombe dans la case 1 adverse, on ne capture qu'1 graine.</p>
+  <h3>Interdictions</h3>
+  <ul>
+    <li>Case 7 avec 1-2 graines : graines retournées à l'adversaire</li>
+    <li>Il est interdit de vider le camp adverse</li>
+  </ul>
+  <h3>Solidarité</h3>
+  <p>Quand le camp adverse est vide, distribuez au moins 7 graines dedans.</p>
+  <h3>Victoire</h3>
+  <p>Premier à 40 graines gagne. Sinon, le plus de graines gagne.</p>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-box">
+    <h2 id="winner-text">Victoire !</h2>
+    <p id="winner-detail"></p>
+    <button class="btn btn-primary" onclick="resetGame()">Rejouer</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  Audio Manager (Web Audio API Synthesizer)
+// ═══════════════════════════════════════════════
+class SoundManager {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+  }
+  init() {
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+  playTap() {
+    if (this.muted) return;
+    this.init();
+    const ctx = this.ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+    
+    // Wood block tap
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(140, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(750, ctx.currentTime + 0.035);
+    
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.045);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  }
+  playChime() {
+    if (this.muted) return;
+    this.init();
+    const ctx = this.ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+    
+    // Two-tone bell harmonic (sweet victory chime)
+    const now = ctx.currentTime;
+    
+    const playTone = (freq, delay, vol) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + delay);
+      
+      gain.gain.setValueAtTime(0, now + delay);
+      gain.gain.linearRampToValueAtTime(vol, now + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.35);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.4);
+    };
+    
+    playTone(523.25, 0, 0.25); // C5
+    playTone(659.25, 0.08, 0.2); // E5
+    playTone(783.99, 0.16, 0.2); // G5
+  }
+  playError() {
+    if (this.muted) return;
+    this.init();
+    const ctx = this.ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+    
+    // Wood thud error block
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(160, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.12);
+    
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.15);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.16);
+  }
+}
+const sounds = new SoundManager();
+
+function toggleSound() {
+  sounds.muted = !sounds.muted;
+  const btn = document.getElementById('btn-sound');
+  const icon = document.getElementById('sound-icon');
+  if (sounds.muted) {
+    icon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>`;
+    btn.classList.add('muted');
+  } else {
+    icon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>`;
+    btn.classList.remove('muted');
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  GAME ENGINE LOGIC (STRICT RULES PRESERVATION)
+// ═══════════════════════════════════════════════
+const BOARD_SIZE = 14;
+const WINNING_SCORE = 40;
+const MIN_SEEDS = 10;
+
+// Circular mapping (clockwise)
+const TO_CIRCULAR = [8,9,10,11,12,13,0,7,6,5,4,3,2,1];
+const TO_BOARD = [6,13,12,11,10,9,8,7,0,1,2,3,4,5];
+
+let board, players, currentPlayer, gameOver, solidarityMode, allowedMoves;
+let isAnimating = false;
+
+function initGame() {
+  board = new Array(BOARD_SIZE).fill(5);
+  players = [
+    { name: 'Nord', territory: 'north', score: 0 },
+    { name: 'Sud', territory: 'south', score: 0 }
+  ];
+  currentPlayer = 0;
+  gameOver = false;
+  solidarityMode = false;
+  allowedMoves = null;
+  isAnimating = false;
+}
+
+function getCases(player) {
+  return player.territory === 'north' ? [0,1,2,3,4,5,6] : [7,8,9,10,11,12,13];
+}
+
+function getOpponentCases(player) {
+  return player.territory === 'north' ? [7,8,9,10,11,12,13] : [0,1,2,3,4,5,6];
+}
+
+function getCase7Index(player) {
+  return player.territory === 'north' ? 6 : 7;
+}
+
+function getCase1Index(player) {
+  return player.territory === 'north' ? 13 : 0;
+}
+
+function isOpponentTerritory(index, player) {
+  return getOpponentCases(player).includes(index);
+}
+
+function sow(sourceIndex, player) {
+  let seedsToSow = board[sourceIndex];
+  board[sourceIndex] = 0;
+  let currentCircular = TO_CIRCULAR[sourceIndex];
+  const skipCircular = currentCircular;
+  const path = [];
+
+  for (let k = 0; k < seedsToSow; k++) {
+    currentCircular = (currentCircular + 1) % BOARD_SIZE;
+    if (currentCircular === skipCircular) currentCircular = (currentCircular + 1) % BOARD_SIZE;
+    const boardIdx = TO_BOARD[currentCircular];
+    board[boardIdx]++;
+    path.push(boardIdx);
+  }
+
+  return { path, lastIndex: TO_BOARD[currentCircular], totalSeeds: seedsToSow };
+}
+
+function checkCapture(lastIndex, player, totalSeeds) {
+  const captured = [];
+  const capturedIndices = [];
+
+  // Case 1 speciale
+  if (totalSeeds % BOARD_SIZE === 0 && lastIndex === getCase1Index(player)) {
+    board[lastIndex]--;
+    player.score++;
+    return { captured: [1], capturedIndices: [lastIndex], singleCapture: true };
+  }
+
+  // Capture normale
+  if (isOpponentTerritory(lastIndex, player) && board[lastIndex] >= 2 && board[lastIndex] <= 4) {
+    captured.push(board[lastIndex]);
+    capturedIndices.push(lastIndex);
+    player.score += board[lastIndex];
+    board[lastIndex] = 0;
+
+    // Prise a la chaine
+    let prevCircular = (TO_CIRCULAR[lastIndex] - 1 + BOARD_SIZE) % BOARD_SIZE;
+    while (isOpponentTerritory(TO_BOARD[prevCircular], player)) {
+      const idx = TO_BOARD[prevCircular];
+      if (board[idx] >= 2 && board[idx] <= 4) {
+        captured.push(board[idx]);
+        capturedIndices.push(idx);
+        player.score += board[idx];
+        board[idx] = 0;
+        prevCircular = (prevCircular - 1 + BOARD_SIZE) % BOARD_SIZE;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return { captured, capturedIndices, singleCapture: false };
+}
+
+function checkCase7Forbidden(player) {
+  const case7Idx = getCase7Index(player);
+  const seeds = board[case7Idx];
+  if (seeds === 1 || seeds === 2) {
+    board[case7Idx] = 0;
+    const opponent = players[1 - currentPlayer];
+    opponent.score += seeds;
+    return { forbidden: true, seedsReturned: seeds };
+  }
+  return { forbidden: false };
+}
+
+// Fixed checkSolidarity to match exact logic
+function checkSolidarity(player) {
+  const opponentCases = getOpponentCases(player);
+  const seedsInOpponent = opponentCases.reduce((s, i) => s + board[i], 0);
+
+  if (seedsInOpponent === 0) {
+    solidarityMode = true;
+    const playerCases = getCases(player);
+    const validMoves = getValidMovesRaw(player);
+    const maxSeeds = Math.max(...playerCases.map(i => board[i]));
+    const threshold = Math.min(7, maxSeeds);
+    allowedMoves = validMoves.filter(i => board[i] >= threshold);
+    if (allowedMoves.length === 0) {
+      allowedMoves = validMoves.filter(i => board[i] >= maxSeeds);
+    }
+    if (allowedMoves.length === 0) return { gameOver: true, reason: 'solidarity_impossible' };
+  }
+  return { gameOver: false };
+}
+
+function getValidMovesRaw(player) {
+  const cases = getCases(player);
+  return cases.filter(i => board[i] > 0);
+}
+
+function getValidMoves(player) {
+  if (solidarityMode && allowedMoves) return allowedMoves;
+  return getValidMovesRaw(player);
+}
+
+function wouldEmptyOpponent(sourceIndex, player) {
+  const seedsToSow = board[sourceIndex];
+  const opponentSeeds = getOpponentCases(player).reduce((s, i) => s + board[i], 0);
+  return seedsToSow > 0 && opponentSeeds === 0;
+}
+
+function checkGameOver() {
+  const totalSeeds = board.reduce((s, v) => s + v, 0);
+  if (totalSeeds < MIN_SEEDS) return { gameOver: true, reason: 'few_seeds' };
+  for (const p of players) {
+    if (p.score >= WINNING_SCORE) return { gameOver: true, reason: 'reached_40' };
+  }
+  if (solidarityMode && (!allowedMoves || allowedMoves.length === 0)) {
+    return { gameOver: true, reason: 'solidarity_impossible' };
+  }
+  if (getValidMovesRaw(players[currentPlayer]).length === 0) {
+    return { gameOver: true, reason: 'no_moves' };
+  }
+  return { gameOver: false };
+}
+
+function playTurn(sourceIndex) {
+  const player = players[currentPlayer];
+
+  // Verifier case 7
+  const forbidden = checkCase7Forbidden(player);
+  if (forbidden.forbidden) {
+    return { valid: true, type: 'forbidden', seedsReturned: forbidden.seedsReturned };
+  }
+
+  // Sow
+  const sowResult = sow(sourceIndex, player);
+
+  // Capture
+  const captureResult = checkCapture(sowResult.lastIndex, player, sowResult.totalSeeds);
+
+  // Check game over after play
+  const go1 = checkGameOver();
+
+  // Check solidarity
+  const solidResult = checkSolidarity(player);
+
+  // Check game over after solidarity
+  const go2 = checkGameOver();
+
+  return {
+    valid: true,
+    type: 'sow',
+    path: sowResult.path,
+    lastIndex: sowResult.lastIndex,
+    totalSeeds: sowResult.totalSeeds,
+    captured: captureResult.captured,
+    capturedIndices: captureResult.capturedIndices,
+    singleCapture: captureResult.singleCapture,
+    gameOver: go2.gameOver || go1.gameOver,
+    gameOverReason: (go2.gameOver ? go2.reason : go1.reason) || null
+  };
+}
+
+function nextTurn() {
+  currentPlayer = 1 - currentPlayer;
+  checkSolidarity(players[currentPlayer]);
+}
+
+function determineWinner() {
+  if (players[0].score > players[1].score) return { type: 'win', winner: players[0] };
+  if (players[1].score > players[0].score) return { type: 'win', winner: players[1] };
+  return { type: 'draw' };
+}
+
+// ═══════════════════════════════════════════════
+//  UI RENDERING AND SEED GRAPHICS
+// ═══════════════════════════════════════════════
+
+function render() {
+  const northHoles = document.getElementById('holes-north');
+  const southHoles = document.getElementById('holes-south');
+  northHoles.innerHTML = '';
+  southHoles.innerHTML = '';
+
+  for (let i = 0; i <= 6; i++) {
+    const hole = createHoleElement(i);
+    northHoles.appendChild(hole);
+  }
+  for (let i = 7; i <= 13; i++) {
+    const hole = createHoleElement(i);
+    southHoles.appendChild(hole);
+  }
+
+  document.getElementById('val-north').textContent = players[0].score;
+  document.getElementById('val-south').textContent = players[1].score;
+
+  document.getElementById('score-north').classList.toggle('active', currentPlayer === 0);
+  document.getElementById('score-south').classList.toggle('active', currentPlayer === 1);
+}
+
+function createHoleElement(index) {
+  const hole = document.createElement('div');
+  const count = board[index];
+  hole.className = 'hole' + (count === 0 ? ' empty' : '');
+  hole.dataset.index = index;
+
+  // Render organic pebbles using spiral layout
+  const seedsContainer = document.createElement('div');
+  seedsContainer.className = 'seeds-container';
+  const displayCount = Math.min(count, 12);
+  for (let s = 0; s < displayCount; s++) {
+    const stone = document.createElement('span');
+    stone.className = `seed-stone stone-type-${(index + s) % 3}`;
+    const angle = s * 2.39996; // Golden angle in radians
+    const radius = Math.sqrt(s) * 4.5 + 2.5; // Spiral spacing radius
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    stone.style.transform = `translate(${x}px, ${y}px) rotate(${Math.floor((index + s) * 73) % 360}deg)`;
+    seedsContainer.appendChild(stone);
+  }
+  hole.appendChild(seedsContainer);
+
+  // Floating count badge
+  const badge = document.createElement('div');
+  badge.className = 'seed-count-badge';
+  badge.textContent = count;
+  hole.appendChild(badge);
+
+  const validMoves = gameOver ? [] : getValidMoves(players[currentPlayer]);
+  if (validMoves.includes(index) && !isAnimating) hole.classList.add('valid');
+
+  hole.addEventListener('click', () => onHoleClick(index));
+  return hole;
+}
+
+function onHoleClick(index) {
+  if (gameOver || isAnimating) return;
+  const player = players[currentPlayer];
+  const validMoves = getValidMoves(player);
+  if (!validMoves.includes(index)) return;
+
+  // Save state before turn for visual step-by-step sowing animation
+  const boardBefore = [...board];
+  const scoreBeforeP0 = players[0].score;
+  const scoreBeforeP1 = players[1].score;
+
+  const result = playTurn(index);
+  if (!result.valid) return;
+
+  // Cache final computed state
+  const boardAfter = [...board];
+  const scoreAfterP0 = players[0].score;
+  const scoreAfterP1 = players[1].score;
+  const solidarityAfter = solidarityMode;
+  const allowedMovesAfter = allowedMoves;
+  const gameOverAfter = result.gameOver;
+  const gameOverReasonAfter = result.gameOverReason;
+
+  // Rollback state temporarily to animate step-by-step
+  board = boardBefore;
+  players[0].score = scoreBeforeP0;
+  players[1].score = scoreBeforeP1;
+  solidarityMode = false;
+  allowedMoves = null;
+  isAnimating = true;
+
+  if (result.type === 'forbidden') {
+    sounds.playError();
+    const cells = document.querySelectorAll('.hole');
+    cells.forEach(c => c.classList.add('forbidden-anim'));
+    setStatus(`Coup interdit ! ${result.seedsReturned} graine(s) retournée(s).`, true);
+    setTimeout(() => {
+      cells.forEach(c => c.classList.remove('forbidden-anim'));
+      board = boardAfter;
+      players[0].score = scoreAfterP0;
+      players[1].score = scoreAfterP1;
+      render();
+      if (gameOverAfter) {
+        showGameOver(gameOverReasonAfter);
+      } else {
+        nextTurn();
+        render();
+      }
+      isAnimating = false;
+    }, 500);
+  } else {
+    // Sowing animation
+    board[index] = 0; // Empty the source hole immediately on click
+    render();
+    
+    let k = 0;
+    const path = result.path;
+
+    function step() {
+      if (k < path.length) {
+        board[path[k]]++;
+        render();
+        sounds.playTap();
+        k++;
+        setTimeout(step, 80);
+      } else {
+        // Sowing finished, process captures if any
+        if (result.capturedIndices && result.capturedIndices.length > 0) {
+          setTimeout(() => {
+            sounds.playChime();
+            result.capturedIndices.forEach(idx => {
+              const el = document.querySelector(`.hole[data-index='${idx}']`);
+              if (el) el.classList.add('captured-flash');
+              board[idx] = 0;
+            });
+            players[0].score = scoreAfterP0;
+            players[1].score = scoreAfterP1;
+            render();
+
+            const msg = result.captured.length > 0
+              ? `${player.name} capture ${result.captured.reduce((a,b)=>a+b,0)} graine(s) !`
+              : result.singleCapture
+                ? `${player.name} capture 1 graine (case spéciale).`
+                : `${player.name} pose ${result.totalSeeds} graine(s).`;
+            setStatus(msg, false);
+
+            setTimeout(() => {
+              board = boardAfter;
+              solidarityMode = solidarityAfter;
+              allowedMoves = allowedMovesAfter;
+              gameOver = gameOverAfter;
+              if (gameOver) {
+                showGameOver(gameOverReasonAfter);
+              } else {
+                nextTurn();
+                render();
+              }
+              isAnimating = false;
+            }, 450);
+          }, 200);
+        } else {
+          // Normal sowing without captures
+          const msg = `${player.name} pose ${result.totalSeeds} graine(s).`;
+          setStatus(msg, false);
+          
+          board = boardAfter;
+          solidarityMode = solidarityAfter;
+          allowedMoves = allowedMovesAfter;
+          gameOver = gameOverAfter;
+          if (gameOver) {
+            showGameOver(gameOverReasonAfter);
+          } else {
+            nextTurn();
+            render();
+          }
+          isAnimating = false;
+        }
+      }
+    }
+    setTimeout(step, 80);
+  }
+}
+
+function setStatus(msg, alert) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.classList.toggle('alert', alert);
+}
+
+function showGameOver(reason) {
+  gameOver = true;
+  let msg = '';
+  if (reason === 'few_seeds') msg = 'Moins de 10 graines restantes.';
+  else if (reason === 'reached_40') msg = 'Un joueur a atteint 40 graines.';
+  else if (reason === 'solidarity_impossible') msg = 'Solidarité impossible.';
+  else if (reason === 'no_moves') msg = 'Plus de coups possibles.';
+
+  const result = determineWinner();
+  document.getElementById('winner-text').textContent = result.type === 'draw' ? 'Match nul' : `${result.winner.name} gagne !`;
+  document.getElementById('winner-detail').textContent = msg + ` (${players[0].score} - ${players[1].score})`;
+  document.getElementById('overlay').classList.add('show');
+}
+
+function resetGame() {
+  initGame();
+  render();
+  setStatus('Choisissez une case dans votre territoire', false);
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function toggleRules() {
+  const el = document.getElementById('rules');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+initGame();
+render();
+</script>
+</body>
+</html>
