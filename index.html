@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SONGO — Multijoueur</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Outfit:wght@300;400;600;800&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root {
+  --bg-dark: #0a0807;
+  --board-bg: linear-gradient(135deg, #2c160e 0%, #1c0d08 50%, #110704 100%);
+  --gold: #d4af37;
+  --gold-glow: rgba(212, 175, 55, 0.4);
+  --emerald: #10b981;
+  --emerald-glow: rgba(16, 185, 129, 0.3);
+  --sapphire: #3b82f6;
+  --sapphire-glow: rgba(59, 130, 246, 0.3);
+  --text-white: #f5efe6;
+  --text-gold: #f3e5c8;
+  --text-muted: #a08c84;
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 8px;
+  --shadow-deep: 0 20px 45px rgba(0,0,0,0.85), inset 0 2px 4px rgba(255,255,255,0.05);
+  --shadow-inset: inset 0 8px 16px rgba(0,0,0,0.9), inset 0 -2px 4px rgba(255,255,255,0.05);
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-dark);
+  background-image: radial-gradient(circle at center, rgba(212, 175, 55, 0.04) 0%, transparent 80%),
+                    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M0 0h30v30H0zm30 30h30v30H30z' fill='%2319110d' fill-opacity='.25'/%3E%3Cpath d='M30 0h30v30H30zM0 30h30v30H0z' fill='%23221712' fill-opacity='.18'/%3E%3Cpath d='M15 0L30 15L15 30L0 15zM45 30L60 45L45 60L30 45z' fill='%23d4af37' fill-opacity='.025'/%3E%3C/svg%3E");
+  color: var(--text-white);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  overflow-x: hidden;
+}
+
+h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 2.6rem;
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 0.15em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 15px var(--gold-glow);
+  margin-bottom: 4px;
+}
+h2 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-gold);
+}
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.rules-toggle {
+  background: none;
+  border: none;
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: underline;
+  margin-top: 8px;
+  font-family: 'Outfit', sans-serif;
+  transition: opacity 0.2s;
+}
+.rules-toggle:hover {
+  opacity: 0.8;
+}
+
+/* Menu Container */
+.menu-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 2rem auto;
+}
+.menu-box {
+  background: rgba(22, 14, 11, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+  margin-bottom: 20px;
+  position: relative;
+}
+.menu-box::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px dashed rgba(212, 175, 55, 0.05);
+  border-radius: calc(var(--radius-lg) - 4px);
+  pointer-events: none;
+}
+.menu-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid rgba(212, 175, 55, 0.25);
+  background: rgba(10, 8, 7, 0.6);
+  color: var(--text-gold);
+  border-radius: var(--radius-md);
+  font-size: 1.2rem;
+  text-align: center;
+  letter-spacing: 2px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.2s;
+}
+.form-group input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.25);
+}
+
+/* Buttons */
+button, .btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-primary {
+  width: 100%;
+  background: var(--gold);
+  color: #1a0c07;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+  transform: translateY(-2px);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-secondary {
+  width: 100%;
+  background: transparent;
+  color: var(--text-gold);
+  border: 1.5px solid var(--gold);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--gold);
+  color: #1a0c07;
+  box-shadow: 0 0 15px rgba(212,175,55,0.4);
+  transform: translateY(-2px);
+}
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--text-gold);
+  border: 1.5px solid var(--gold);
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--gold);
+  color: #1a0c07;
+  transform: translateY(-2px);
+}
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+}
+.btn-danger {
+  background: transparent;
+  border: 1.5px solid #ef4444 !important;
+  color: #fca5a5 !important;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #ef4444 !important;
+  color: #fff !important;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4) !important;
+  transform: translateY(-2px);
+}
+.btn-icon {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+}
+.btn-icon svg {
+  transition: transform 0.2s;
+}
+.btn-icon:hover svg {
+  transform: scale(1.1);
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+.form-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* In-game layout */
+.game-header {
+  width: 100%;
+  max-width: 540px;
+  padding: 12px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.game-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.online-status {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.status-waiting {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.status-playing {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.scores {
+  display: flex;
+  gap: 16px;
+}
+.score {
+  text-align: center;
+  background: rgba(22, 14, 11, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  min-width: 76px;
+}
+.score-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-gold);
+}
+.score-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* Board Container */
+.board-container {
+  width: 100%;
+  max-width: 540px;
+  background: var(--board-bg);
+  border: 5px double var(--gold);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-deep);
+  padding: 32px 24px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.board-container::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: 8px; right: 8px; bottom: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  border-radius: calc(var(--radius-lg) - 8px);
+  pointer-events: none;
+}
+.board {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+}
+
+/* Cells / Holes */
+.cell {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 15%, #0f0705 10%, #1f0f0a 60%, #301810 100%);
+  border: 3px solid #2d160f;
+  box-shadow: var(--shadow-inset);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cell:hover {
+  transform: translateY(-2px) scale(1.06);
+  border-color: var(--gold);
+  box-shadow: 0 4px 15px rgba(212,175,55,0.35), var(--shadow-inset);
+}
+.cell.sown {
+  box-shadow: 0 0 14px rgba(212,175,55,0.45), var(--shadow-inset);
+  transform: translateY(-4px) scale(1.08);
+  transition: transform 0.14s, box-shadow 0.14s;
+}
+.cell.my-turn {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px var(--gold-glow), var(--shadow-inset);
+}
+.cell.solidarity {
+  border-color: #2196f3;
+  box-shadow: 0 0 12px rgba(33, 150, 243, 0.45), var(--shadow-inset);
+}
+.cell.forbidden-anim {
+  animation: forbidden-shake 0.15s ease-in-out 3;
+  border-color: #ff4d4d !important;
+  box-shadow: 0 0 15px rgba(255, 77, 77, 0.6), var(--shadow-inset) !important;
+}
+
+@keyframes forbidden-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px) rotate(-1.5deg); }
+  75% { transform: translateX(4px) rotate(1.5deg); }
+}
+
+.cell .idx {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: 600;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Pebbles/Seeds styles */
+.seeds-container {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.seed-stone {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 40% 60% 50% 50% / 50% 40% 60% 50%;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.85), inset 1px 1px 1px rgba(255,255,255,0.25);
+  transition: all 0.25s ease;
+}
+.stone-type-0 {
+  background: radial-gradient(circle at 35% 35%, #7f8c8d 0%, #2c3e50 70%, #151e26 100%);
+}
+.stone-type-1 {
+  background: radial-gradient(circle at 35% 35%, #e67e22 0%, #d35400 75%, #6b2b00 100%);
+}
+.stone-type-2 {
+  background: radial-gradient(circle at 35% 35%, #f1c40f 0%, #9e5d00 70%, #3e2400 100%);
+}
+
+.seed-count-badge {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  background: rgba(18, 11, 8, 0.9);
+  border: 1px solid var(--gold);
+  color: var(--text-gold);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  z-index: 10;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+.cell:hover .seed-count-badge {
+  transform: scale(1.15);
+}
+
+@keyframes capture-burst {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.25); filter: brightness(1.8) drop-shadow(0 0 6px var(--gold)); }
+  100% { transform: scale(0); filter: brightness(1); opacity: 0; }
+}
+.cell.captured-flash .seed-stone {
+  animation: capture-burst 0.45s ease-out forwards;
+}
+
+.board-footer {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.turn-indicator {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 10px 20px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  width: 100%;
+  max-width: 540px;
+  transition: all 0.3s;
+}
+.turn-indicator.my-turn {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--emerald);
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+}
+.turn-indicator.opp-turn {
+  background: rgba(22, 14, 11, 0.5);
+  color: var(--text-muted);
+  border-color: rgba(212, 175, 55, 0.1);
+}
+
+.solidarity-banner {
+  background: rgba(33, 150, 243, 0.15);
+  border: 1.5px solid rgba(33, 150, 243, 0.35);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  text-align: center;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #90caf9;
+  width: 100%;
+  max-width: 540px;
+  box-shadow: 0 0 10px rgba(33, 150, 243, 0.1);
+}
+
+.footer-actions {
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.footer-actions button {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Overlay / Modal */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 3, 2, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.overlay.show {
+  display: flex;
+  opacity: 1;
+}
+.modal {
+  background: linear-gradient(135deg, #25140e 0%, #160a06 100%);
+  border: 3px solid var(--gold);
+  border-radius: var(--radius-lg);
+  padding: 36px 28px;
+  text-align: center;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.9), 0 0 30px rgba(212, 175, 55, 0.2);
+  max-width: 350px;
+  width: 90%;
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+}
+.overlay.show .modal {
+  transform: translateY(0);
+}
+.modal h2 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.8rem;
+  color: var(--gold);
+  margin-bottom: 10px;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+.modal p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+.modal button {
+  background: var(--gold);
+  color: #1a0c07;
+  width: 100%;
+  font-weight: 700;
+}
+.modal button:hover {
+  box-shadow: 0 0 15px rgba(212,175,55,0.6);
+}
+.modal .score-box {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-gold);
+  margin: 12px 0 16px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.game-container {
+  display: none;
+  width: 100%;
+  max-width: 540px;
+  flex-direction: column;
+  align-items: center;
+}
+.game-container.show {
+  display: flex;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 24px;
+  background: rgba(22, 14, 11, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--gold);
+  color: var(--text-gold);
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9rem;
+  z-index: 200;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  text-align: center;
+  max-width: 90%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.toast.error {
+  border-color: #ef4444;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+@media(max-width:480px){
+  body { padding: 12px 8px; }
+  h1 { font-size: 1.8rem; }
+  .cell { border-width: 2.5px; }
+  .board { gap: 6px; }
+  .board-container { padding: 24px 12px; }
+  .seeds-container { width: 24px; height: 24px; }
+  .seed-stone { width: 7.5px; height: 7.5px; }
+  .footer-actions button { min-width: 90px; }
+}
+</style>
+</head>
+<body>
+
+<div id="menu-screen">
+    <div class="menu-container">
+        <div style="text-align:center;margin-bottom:1.5rem">
+            <h1>SONGO</h1>
+            <div class="subtitle">Le jeu de pions traditionnel du Cameroun</div>
+            <button class="rules-toggle" onclick="toggleRules()">Règles du jeu</button>
+        </div>
+
+        <div id="rules-panel" class="menu-box" style="display:none;margin-bottom:1.5rem;font-size:0.88rem;line-height:1.6">
+            <h2 style="margin-bottom:0.5rem;color:var(--gold)">Règles</h2>
+            <ol style="padding-left:1.2rem;color:var(--text-muted);display:flex;flex-direction:column;gap:6px">
+                <li><b>Semez dans le sens horaire</b> depuis une case contenant au moins 1 graine.</li>
+                <li><b>Capture :</b> si la dernière graine tombe dans une case adverse contenant 2 à 4 graines, vous les capturez.</li>
+                <li><b>Capture en série :</b> capturez aussi toutes les cases adjacentes consécutives dans le territoire adverse.</li>
+                <li><b>Capture case 1 :</b> si le nombre de graines semées est un multiple de 14 et tombe sur la case adverse 1, une graine est capturée.</li>
+                <li><b>Case 7 interdite :</b> si la case 7 contient 1 ou 2 graines, l'adversaire les reçoit.</li>
+                <li><b>Solidarité :</b> si l'adversaire n'a plus de graines, vous devez jouer la case ayant le plus de graines.</li>
+                <li><b>Fin du jeu :</b> le premier à 40 graines gagne.</li>
+            </ol>
+            <div style="text-align:center;margin-top:1.2rem">
+                <button class="btn btn-secondary btn-sm" onclick="toggleRules()">Fermer</button>
+            </div>
+        </div>
+
+        <div class="menu-box">
+            <h2 class="menu-title">Multijoueur en ligne</h2>
+            <div class="form-actions">
+                <button class="btn-primary" id="btn-create" onclick="createGame()">Créer une partie</button>
+                <button class="btn-secondary" id="btn-join-toggle" onclick="showJoinForm()">Rejoindre une partie</button>
+            </div>
+            <div id="join-form" style="display:none;margin-top:1.25rem">
+                <div class="form-group">
+                    <label for="game-code">Code de la partie</label>
+                    <input type="text" id="game-code" placeholder="ABCD12" maxlength="6" autocomplete="off">
+                </div>
+                <div class="form-actions">
+                    <button class="btn-primary btn-sm" id="btn-join" onclick="joinGame()">Rejoindre</button>
+                    <button class="btn-secondary btn-sm" onclick="showCreateBtn()">Annuler</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="game-container" id="game-screen">
+    <div class="game-header">
+        <div style="text-align:left">
+            <h1>SONGO</h1>
+            <div class="subtitle">Partie : <span id="game-code-display" style="color:var(--gold);font-weight:700">------</span></div>
+        </div>
+        <div class="game-status">
+            <div class="online-status status-waiting" id="opponent-status">En attente...</div>
+            <div class="scores">
+                <div class="score">
+                    <div class="score-value" id="score-2">0</div>
+                    <div class="score-label">Adversaire</div>
+                </div>
+                <div class="score">
+                    <div class="score-value" id="score-1">0</div>
+                    <div class="score-label">Moi</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="turn-indicator" id="turn-indicator">Tour de l'adversaire</div>
+    <div id="solidarity-banner" class="solidarity-banner" style="display:none">Solidarité : jouez la case la plus remplie</div>
+    
+    <div class="board-container">
+        <div class="board" id="board"></div>
+        <div class="board-footer">Plateau de jeu circulaire (sens horaire)</div>
+    </div>
+    
+    <div class="footer-actions">
+        <button class="btn-danger" onclick="quitGame()">Quitter</button>
+        <button class="btn-secondary btn-sm" onclick="location.reload()">Accueil</button>
+        <button class="btn btn-outline btn-icon" id="btn-sound" onclick="toggleSound()" title="Activer/Désactiver le son">
+            <svg id="sound-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<div class="overlay" id="modal-overlay">
+    <div class="modal">
+        <h2 id="modal-title">Partie terminée</h2>
+        <div class="score-box" id="modal-score"></div>
+        <p id="modal-message"></p>
+        <button onclick="quitGame()">Quitter</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  Audio Manager (Web Audio API Synthesizer)
+// ═══════════════════════════════════════════════
+class SoundManager {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+  }
+  init() {
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+  playTap() {
+    if (this.muted) return;
+    this.init();
+    const ctx = this.ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+    
+    // Wood block tap
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(140, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(750, ctx.currentTime + 0.035);
+    
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.045);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  }
+  playChime() {
+    if (this.muted) return;
+    this.init();
+    const ctx = this.ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+    
+    // Two-tone bell harmonic (sweet victory chime)
+    const now = ctx.currentTime;
+    
+    const playTone = (freq, delay, vol) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + delay);
+      
+      gain.gain.setValueAtTime(0, now + delay);
+      gain.gain.linearRampToValueAtTime(vol, now + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.35);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.4);
+    };
+    
+    playTone(523.25, 0, 0.25); // C5
+    playTone(659.25, 0.08, 0.2); // E5
+    playTone(783.99, 0.16, 0.2); // G5
+  }
+  playError() {
+    if (this.muted) return;
+    this.init();
+    const ctx = this.ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+    
+    // Wood thud error block
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(160, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.12);
+    
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.15);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.16);
+  }
+}
+const sounds = new SoundManager();
+
+function toggleSound() {
+  sounds.muted = !sounds.muted;
+  const btn = document.getElementById('btn-sound');
+  const icon = document.getElementById('sound-icon');
+  if (sounds.muted) {
+    icon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>`;
+    btn.classList.add('muted');
+  } else {
+    icon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>`;
+    btn.classList.remove('muted');
+  }
+}
+
+// ── Constants ──
+const BOARD_SIZE = 14;
+const CASES_P1 = [0,1,2,3,4,5,6];
+const CASES_P2 = [7,8,9,10,11,12,13];
+
+const SOW_DELAY_MS = 180;
+
+// ── State ──
+let gameCode = null;
+let myToken = null;
+let myPlayer = 0;
+let myScore = 0;
+let oppScore = 0;
+let currentTurn = 1;
+let boardState = new Array(BOARD_SIZE).fill(5);
+let version = 0;
+let solidarityMode = false;
+let allowedMoves = null;
+let opponentConnected = false;
+let animating = false;
+let loopInterval = null;
+let heartbeatInterval = null;
+let lastPlayedSourceIndex = null;
+
+// ── Helpers ──
+function $(id) { return document.getElementById(id); }
+function showView(id) {
+    $('menu-screen').style.display = id === 'menu' ? 'block' : 'none';
+    $('game-screen').className = id === 'game' ? 'game-container show' : 'game-container';
+}
+
+function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(() => t.className = 'toast', 2500);
+}
+
+function toggleRules() {
+    const p = $('rules-panel');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+function showJoinForm() { $('join-form').style.display = 'block'; $('btn-create').style.display = 'none'; $('btn-join-toggle').style.display = 'none'; }
+function showCreateBtn() { $('join-form').style.display = 'none'; $('btn-create').style.display = 'block'; $('btn-join-toggle').style.display = 'block'; }
+
+function API(method, url, body) {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch(url, opts).then(r => r.json());
+}
+
+// ── Menu ──
+function createGame() {
+    $('btn-create').disabled = true; $('btn-create').textContent = 'Création...';
+    API('POST', 'api/create.php', { visibility: 'public' }).then(r => {
+        if (!r.success) { toast(r.message, true); $('btn-create').disabled = false; $('btn-create').textContent = 'Créer une partie'; return; }
+        gameCode = r.gameCode; myToken = r.sessionToken; myPlayer = 1;
+        startGame();
+    });
+}
+
+function joinGame() {
+    const code = $('game-code').value.trim().toUpperCase();
+    if (code.length < 4) { toast('Entrez un code valide', true); return; }
+    $('btn-join').disabled = true; $('btn-join').textContent = 'Connexion...';
+    API('POST', 'api/join.php', { code }).then(r => {
+        if (!r.success) { toast(r.message, true); $('btn-join').disabled = false; $('btn-join').textContent = 'Rejoindre'; return; }
+        gameCode = r.gameCode; myToken = r.sessionToken; myPlayer = 2;
+        if (r.gameState) applyState(r.gameState);
+        startGame();
+    });
+}
+
+// ── Game ──
+function startGame() {
+    showView('game');
+    $('game-code-display').textContent = gameCode;
+    updateBoard(); renderBoard();
+    startPolling();
+    startHeartbeat();
+}
+
+function applyState(gs) {
+    boardState = gs.board || new Array(BOARD_SIZE).fill(5);
+    currentTurn = gs.currentTurn || 1;
+    myScore = myPlayer === 1 ? (gs.scoreP1 || 0) : (gs.scoreP2 || 0);
+    oppScore = myPlayer === 1 ? (gs.scoreP2 || 0) : (gs.scoreP1 || 0);
+    version = gs.version || 0;
+    solidarityMode = gs.solidarityMode || false;
+}
+
+function updateBoard() {
+    $('score-1').textContent = myScore; $('score-2').textContent = oppScore;
+    const isMyTurn = currentTurn === myPlayer;
+    $('turn-indicator').textContent = isMyTurn ? 'Votre tour' : 'Tour de l\'adversaire';
+    $('turn-indicator').className = 'turn-indicator ' + (isMyTurn ? 'my-turn' : 'opp-turn');
+    $('solidarity-banner').style.display = solidarityMode ? 'block' : 'none';
+    $('opponent-status').textContent = opponentConnected ? 'Connecté' : 'En attente...';
+    $('opponent-status').className = 'online-status ' + (opponentConnected ? 'status-playing' : 'status-waiting');
+}
+
+function renderBoard() {
+    const b = $('board'); b.innerHTML = '';
+    const isMyTurn = currentTurn === myPlayer;
+    for (let i = 0; i < BOARD_SIZE; i++) {
+        const cell = document.createElement('div');
+        cell.dataset.index = i;
+        const count = boardState[i];
+        cell.className = 'cell' + (count === 0 ? ' empty' : '');
+        
+        // Add styling states
+        if (isMyTurn && count > 0 && isMyCase(i)) cell.classList.add('my-turn');
+        if (isMyTurn && allowedMoves && allowedMoves.includes(i)) cell.classList.add('solidarity');
+
+        // Seeds container
+        const seedsContainer = document.createElement('div');
+        seedsContainer.className = 'seeds-container';
+        const displayCount = Math.min(count, 12);
+        for (let s = 0; s < displayCount; s++) {
+            const stone = document.createElement('span');
+            stone.className = `seed-stone stone-type-${(i + s) % 3}`;
+            const angle = s * 2.39996; // Golden angle
+            const radius = Math.sqrt(s) * 4.5 + 2.5;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            stone.style.transform = `translate(${x}px, ${y}px) rotate(${Math.floor((i + s) * 73) % 360}deg)`;
+            seedsContainer.appendChild(stone);
+        }
+        cell.appendChild(seedsContainer);
+
+        // Count badge
+        const badge = document.createElement('div');
+        badge.className = 'seed-count-badge';
+        badge.textContent = count;
+        cell.appendChild(badge);
+
+        // Index subtitle
+        const idx = document.createElement('div');
+        idx.className = 'idx'; idx.textContent = i;
+        cell.appendChild(idx);
+
+        cell.addEventListener('click', () => playMove(i));
+        b.appendChild(cell);
+    }
+}
+
+function isMyCase(i) { return myPlayer === 1 ? CASES_P1.includes(i) : CASES_P2.includes(i); }
+function isOpponentCase(i) { return myPlayer === 1 ? CASES_P2.includes(i) : CASES_P1.includes(i); }
+
+function playMove(i) {
+    if (animating || currentTurn !== myPlayer) return;
+    if (boardState[i] === 0) return;
+    if (allowedMoves && !allowedMoves.includes(i)) { toast('Coup invalide (solidarité)', true); return; }
+
+    animating = true;
+    lastPlayedSourceIndex = i;
+    API('POST', 'api/move.php', { gameCode, sourceIndex: i }).then(r => {
+        if (!r.success) { toast(r.message, true); animating = false; return; }
+        animateResult(r.moveResult, r.gameState);
+    });
+}
+
+function animateResult(res, gs) {
+    if (res.type === 'forbidden') {
+        animateForbidden(() => { applyState(res); updateBoard(); renderBoard(); animating = false; });
+    } else {
+        // Empty the played cell immediately on the screen before sowing
+        if (lastPlayedSourceIndex !== null) {
+            boardState[lastPlayedSourceIndex] = 0;
+            renderBoard();
+        }
+        animateSowing(res.path, () => {
+            if (res.capturedIndices && res.capturedIndices.length > 0) {
+                animateCapture(res.capturedIndices, () => {
+                    applyState(gs); updateBoard(); renderBoard();
+                    if (res.gameOver) endGame(gs); 
+                    animating = false;
+                });
+            } else {
+                applyState(gs); updateBoard(); renderBoard();
+                if (res.gameOver) endGame(gs); 
+                animating = false;
+            }
+        });
+    }
+}
+
+function animateSowing(path, cb) {
+    if (!path || !path.length) { cb(); return; }
+    let k = 0;
+    function step() {
+        if (k >= path.length) { cb(); return; }
+        // increment visual count for the current target cell
+        boardState[path[k]]++;
+        renderBoard();
+
+        // briefly highlight the cell that just received a seed
+        const idx = path[k];
+        const el = document.querySelector(`.cell[data-index='${idx}']`);
+        if (el) {
+          el.classList.add('sown');
+          setTimeout(() => el.classList.remove('sown'), Math.max(80, SOW_DELAY_MS * 0.7));
+        }
+
+        // play per-seed tap sound
+        sounds.playTap();
+        k++;
+        setTimeout(step, SOW_DELAY_MS);
+    }
+    step();
+}
+
+function animateCapture(indices, cb) {
+    sounds.playChime();
+    indices.forEach(i => {
+        const el = document.querySelector(`.cell[data-index='${i}']`);
+        if (el) el.classList.add('captured-flash');
+    });
+    setTimeout(() => {
+        indices.forEach(i => boardState[i] = 0);
+        renderBoard();
+        cb();
+    }, 450);
+}
+
+function animateForbidden(cb) {
+    sounds.playError();
+    document.querySelectorAll('.cell').forEach(c => c.classList.add('forbidden-anim'));
+    setTimeout(() => {
+        document.querySelectorAll('.cell').forEach(c => c.classList.remove('forbidden-anim'));
+        cb();
+    }, 450);
+}
+
+function endGame(gs) {
+    $('modal-title').textContent = gs.winner === myPlayer ? 'Victoire !' : 'Défaite';
+    $('modal-score').textContent = gs.scoreP1 + ' — ' + gs.scoreP2;
+    $('modal-message').textContent = gs.winner === myPlayer ? 'Félicitations, vous avez gagné !' : 'Dommage, vous avez perdu.';
+    $('modal-overlay').classList.add('show');
+}
+
+// ── Polling ──
+function startPolling() { loopInterval = setInterval(pollState, 2000); }
+function startHeartbeat() { heartbeatInterval = setInterval(() => API('POST', 'api/heartbeat.php'), 10000); }
+
+function pollState() {
+    if (!gameCode || animating) return;
+    API('GET', `api/state.php?code=${gameCode}&since=${version}`).then(r => {
+        if (!r.success) { toast(r.message, true); return; }
+        if (r.opponent) opponentConnected = r.opponent.connected;
+        if (r.modified && r.gameState) {
+            const oldTurn = currentTurn;
+            applyState(r.gameState);
+            if (currentTurn !== oldTurn && currentTurn !== myPlayer) {
+                animateTurnChange(() => { updateBoard(); renderBoard(); });
+            } else {
+                updateBoard(); renderBoard();
+            }
+        } else {
+            updateBoard();
+        }
+    });
+}
+
+function animateTurnChange(cb) {
+    const ind = $('turn-indicator');
+    ind.style.transition = 'all 0.2s';
+    ind.style.transform = 'scale(1.05)';
+    setTimeout(() => { ind.style.transform = 'scale(1)'; cb(); }, 200);
+}
+
+// ── Quit ──
+function quitGame() {
+    if (gameCode) API('POST', 'api/leave.php', { gameCode });
+    clearInterval(loopInterval); clearInterval(heartbeatInterval);
+    location.reload();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  showView('menu');
+  // Unlock web audio on first user interaction (some browsers require a gesture)
+  document.addEventListener('click', () => sounds.init(), { once: true });
+});
+</script>
+</body>
+</html>
