@@ -6,9 +6,11 @@ COPY index.html /var/www/html/index.html
 COPY api/ /var/www/html/api/
 
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html \
-    && chmod -R 775 /var/www/html/api/data \
-    && chmod 664 /var/www/html/api/data/j.json
+    && find /var/www/html -type d -exec chmod 755 {} \; \
+    && find /var/www/html -type f -name "*.php" -exec chmod 644 {} \; \
+    && find /var/www/html -type f -name "*.html" -exec chmod 644 {} \; \
+    && find /var/www/html/api/data -type f -name "*.json" -exec chmod 664 {} \; \
+    && chmod 775 /var/www/html/api/data
 
 RUN echo '<Directory /var/www/html>\n\
     AllowOverride All\n\
