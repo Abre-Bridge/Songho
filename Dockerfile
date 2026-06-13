@@ -3,7 +3,7 @@ FROM php:8.2-apache
 RUN a2enmod rewrite
 
 COPY index.html /var/www/html/index.html
-COPY index.html /var/www/html/local.html
+COPY local.html /var/www/html/local.html
 COPY api/ /var/www/html/api/
 
 RUN chown -R www-data:www-data /var/www/html \
